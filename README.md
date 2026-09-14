@@ -1,19 +1,18 @@
 # Listening Room
 
-An encrypted page for sharing music privately, aimed at using GitHub Pages.
+An encrypted page for private listening, designed for deployment to
+github pages.
 
 ## How it works
 
-GitHub Pages only serves static files, so there's no real server-side login
+GitHub Pages only serves static files, so there's no login auth
 available. What this does instead: your audio files are encrypted (AES-256-GCM)
-*before* they're committed to the repo, using a key derived from your
-password (PBKDF2, 300,000 iterations). The browser derives that same key
-from whatever a visitor types and decrypts each track in memory right
-before playing it.
+and committed to the repo, using a private key generated from your password.
+The browser uses the same process to decrypt.
 
-Files sitting on GitHub's CDN are encrypted. A direct link to `songs/track-one.mp3.enc` 
-gets encrypted cyphertext. The password is the decryption key; if the password is wrong,
-decryption itself fails.
+Files sitting on GitHub are encrypted. A direct link to `songs/track-one.mp3.enc` 
+gets encrypted cyphertext. Without the password, there's no way to access
+the audio data.
 
 
 ## 1. Prepare your tracks
