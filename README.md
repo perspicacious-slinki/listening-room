@@ -18,9 +18,9 @@ the audio data.
 ## 1. Prepare your tracks
 
 Create:
-- ```bash mkdir conv_songs raw_songs```
+- ```mkdir conv_songs raw_songs```
 - Audio files (With metadata, and names starting with track number) in `raw_songs/`
-- ```bash conv.sh``` to populate `conv_songs/`
+- ```conv.sh``` to populate `conv_songs/`
 
 `conv.sh`, is provided to convert audio to 192kbps mp3 using ffmpeg.
 
