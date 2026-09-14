@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listening Room</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14110f;
+    --ink-2:#1b1712;
+    --paper:#efe8dc;
+    --muted:#8a8072;
+    --gold:#b8925a;
+    --gold-dim:#7d6640;
+    --line:#2a241e;
+  }
+
+  * { box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+  }
+
+  /* ---------- Gate ---------- */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  .gate-card{
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+
+  .gate-mark{
+    width:38px;
+    height:38px;
+    margin:0 auto 28px;
+    border:1px solid var(--gold-dim);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .gate-mark::after{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--gold);
+  }
+
+  .gate-title{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-style:italic;
+    font-size:28px;
+    letter-spacing:0.01em;
+    margin:0 0 8px;
+    color:var(--paper);
+  }
+
+  .gate-sub{
+    font-size:12px;
+    color:var(--muted);
+    margin:0 0 32px;
+    letter-spacing:0.02em;
+  }
+
+  #passInput{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--line);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:16px;
+    padding:10px 4px;
+    text-align:center;
+    letter-spacing:0.1em;
+    outline:none;
+    transition:border-color .2s ease;
+  }
+  #passInput:focus{ border-color:var(--gold); }
+  #passInput::placeholder{ color:var(--muted); opacity:.6; }
+  #passInput:disabled{ opacity:.4; }
+
+  #enterBtn{
+    margin-top:22px;
+    background:none;
+    border:1px solid var(--gold-dim);
+    color:var(--gold);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    padding:10px 22px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  #enterBtn:hover{ border-color:var(--gold); color:var(--paper); }
+  #enterBtn:disabled{ opacity:.4; cursor:default; }
+
+  #gateError{
+    height:16px;
+    margin-top:16px;
+    font-size:11px;
+    color:#b5654f;
+    letter-spacing:0.03em;
+  }
+
+  /* ---------- Room (player) ---------- */
+  #room{
+    display:none;
+    min-height:100vh;
+  }
+
+  .room-inner{
+    max-width:640px;
+    margin:0 auto;
+    padding:64px 24px 80px;
+  }
+
+  .room-head{
+    margin-bottom:48px;
+  }
+
+  .room-title{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-style:italic;
+    font-size:34px;
+    margin:0 0 6px;
+  }
+
+  .room-sub{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.02em;
+  }
+
+  #trackList{
+    border-top:1px solid var(--line);
+  }
+
+  .track{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:16px 4px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+
+  .track-num{
+    width:22px;
+    flex-shrink:0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .track.playing .track-num{ color:var(--gold); }
+  .track.loading .track-num{ color:var(--gold); opacity:.5; }
+
+  .track-body{ flex:1; min-width:0; }
+
+  .track-title{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    color:var(--paper);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .track.playing .track-title{ color:var(--gold); }
+
+  .track-note{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  .track-time{
+    font-size:11px;
+    color:var(--muted);
+    flex-shrink:0;
+  }
+
+  /* now playing bar */
+  #nowBar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:var(--ink-2);
+    border-top:1px solid var(--line);
+    padding:14px 24px;
+    display:none;
+  }
+  #nowBar.active{ display:block; }
+
+  .nowbar-inner{
+    max-width:640px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:16px;
+  }
+
+  #playPause{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:1px solid var(--gold-dim);
+    background:none;
+    color:var(--gold);
+    cursor:pointer;
+    flex-shrink:0;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #playPause:hover{ border-color:var(--gold); }
+
+  #nowTitle{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:14px;
+    flex-shrink:0;
+    max-width:160px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  #seek{
+    flex:1;
+    -webkit-appearance:none;
+    appearance:none;
+    height:2px;
+    background:var(--line);
+    outline:none;
+    cursor:pointer;
+  }
+  #seek::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:10px; height:10px;
+    border-radius:50%;
+    background:var(--gold);
+    cursor:pointer;
+  }
+  #seek::-moz-range-thumb{
+    width:10px; height:10px;
+    border:none;
+    border-radius:50%;
+    background:var(--gold);
+    cursor:pointer;
+  }
+
+  #timeLabel{
+    font-size:11px;
+    color:var(--muted);
+    width:80px;
+    text-align:right;
+    flex-shrink:0;
+  }
+
+  .empty-note{
+    color:var(--muted);
+    font-size:13px;
+    padding:24px 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ PASSWORD GATE ============ -->
+  <div id="gate">
+    <div class="gate-card">
+      <div class="gate-mark"></div>
+      <h1 class="gate-title">Listening Room</h1>
+      <p class="gate-sub" id="gateSub"></p>
+      <input id="passInput" type="password" placeholder="password" autocomplete="off" />
+      <div id="gateError"></div>
+      <br>
+      <button id="enterBtn">enter</button>
+    </div>
+  </div>
+
+  <!-- ============ PLAYER ROOM ============ -->
+  <div id="room">
+    <div class="room-inner">
+      <div class="room-head">
+        <h1 class="room-title">Listening Room</h1>
+        <div class="room-sub" id="trackCount"></div>
+      </div>
+      <div id="trackList"></div>
+    </div>
+  </div>
+
+  <!-- ============ NOW PLAYING BAR ============ -->
+  <div id="nowBar">
+    <div class="nowbar-inner">
+      <button id="playPause">▶</button>
+      <div id="nowTitle">—</div>
+      <input id="seek" type="range" min="0" max="100" value="0">
+      <div id="timeLabel">0:00 / 0:00</div>
+    </div>
+  </div>
+
+<script>
+/*
+  ---- HOW THIS WORKS ----
+  The password is never stored anywhere, hashed or otherwise. Instead:
+    1. The password + a public SALT are run through PBKDF2 to derive an
+       AES-256-GCM key, entirely in the browser.
+    2. That key is used to try decrypting songs/manifest.json.enc.
+       Wrong password -> decryption fails -> we know instantly, without
+       ever "checking" the password against anything stored.
+    3. Each track file (songs/*.enc) was encrypted the same way ahead of
+       time (see encrypt.py) and is decrypted in memory right before
+       playback, then handed to <audio> as a Blob URL.
+
+  The .enc files on the server are inert ciphertext. Without the password,
+  there is nothing to reverse-engineer from a direct link.
+*/
+const SALT_HEX = "7fe777fe532640d970260de6faa0f670"; // public, not secret — just needs to match encrypt.py
+const PBKDF2_ITERATIONS = 300000;
+const SESSION_KEY_STORAGE = "listening-room-key";
+
+function hexToBytes(hex){
+  const arr = new Uint8Array(hex.length / 2);
+  for(let i=0;i<arr.length;i++) arr[i] = parseInt(hex.substr(i*2,2), 16);
+  return arr;
+}
+function bytesToHex(bytes){
+  return Array.from(bytes).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+async function deriveKey(password){
+  const baseKey = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name:"PBKDF2", salt: hexToBytes(SALT_HEX), iterations: PBKDF2_ITERATIONS, hash:"SHA-256" },
+    baseKey,
+    { name:"AES-GCM", length:256 },
+    true,
+    ["decrypt"]
+  );
+}
+
+async function decryptBuffer(key, buffer){
+  const bytes = new Uint8Array(buffer);
+  const iv = bytes.slice(0, 12);
+  const ciphertext = bytes.slice(12);
+  return crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, ciphertext);
+}
+
+let cryptoKey = null;
+
+const gate = document.getElementById("gate");
+const room = document.getElementById("room");
+const passInput = document.getElementById("passInput");
+const enterBtn = document.getElementById("enterBtn");
+const gateError = document.getElementById("gateError");
+const gateSub = document.getElementById("gateSub");
+
+async function tryEnter(){
+  const val = passInput.value;
+  if(!val) return;
+  passInput.disabled = true;
+  enterBtn.disabled = true;
+  gateSub.textContent = "unlocking…";
+  gateError.textContent = "";
+
+  try{
+    const key = await deriveKey(val);
+    const res = await fetch("songs/manifest.json.enc", { cache:"no-store" });
+    if(!res.ok) throw new Error("no manifest");
+    const plain = await decryptBuffer(key, await res.arrayBuffer());
+    const tracks = JSON.parse(new TextDecoder().decode(plain));
+
+    cryptoKey = key;
+    const rawKey = await crypto.subtle.exportKey("raw", key);
+    sessionStorage.setItem(SESSION_KEY_STORAGE, bytesToHex(new Uint8Array(rawKey)));
+
+    unlock(tracks);
+  } catch(e){
+    gateError.textContent = "not quite";
+    gateSub.textContent = "";
+    passInput.value = "";
+    passInput.disabled = false;
+    enterBtn.disabled = false;
+    passInput.focus();
+  }
+}
+
+function unlock(tracks){
+  gate.style.display = "none";
+  room.style.display = "block";
+  renderTracks(tracks);
+}
+
+enterBtn.addEventListener("click", tryEnter);
+passInput.addEventListener("keydown", e => { if(e.key === "Enter") tryEnter(); });
+
+// Try to resume a session without re-typing the password
+(async () => {
+  const storedHex = sessionStorage.getItem(SESSION_KEY_STORAGE);
+  if(!storedHex) return;
+  try{
+    const key = await crypto.subtle.importKey(
+      "raw", hexToBytes(storedHex), { name:"AES-GCM" }, true, ["decrypt"]
+    );
+    const res = await fetch("songs/manifest.json.enc", { cache:"no-store" });
+    const plain = await decryptBuffer(key, await res.arrayBuffer());
+    const tracks = JSON.parse(new TextDecoder().decode(plain));
+    cryptoKey = key;
+    unlock(tracks);
+  } catch(e){
+    sessionStorage.removeItem(SESSION_KEY_STORAGE);
+  }
+})();
+
+/* ---------- Player ---------- */
+const audio = new Audio();
+let tracks = [];
+let currentIndex = -1;
+let currentObjectUrl = null;
+
+const trackListEl = document.getElementById("trackList");
+const trackCountEl = document.getElementById("trackCount");
+const nowBar = document.getElementById("nowBar");
+const playPauseBtn = document.getElementById("playPause");
+const nowTitle = document.getElementById("nowTitle");
+const seek = document.getElementById("seek");
+const timeLabel = document.getElementById("timeLabel");
+
+function fmtTime(s){
+  if(!isFinite(s)) return "0:00";
+  const m = Math.floor(s/60);
+  const sec = Math.floor(s%60).toString().padStart(2,"0");
+  return `${m}:${sec}`;
+}
+
+function renderTracks(list){
+  tracks = list;
+  trackCountEl.textContent = tracks.length
+    ? `${tracks.length} track${tracks.length === 1 ? "" : "s"}`
+    : "";
+
+  if(!tracks.length){
+    trackListEl.innerHTML = `<div class="empty-note">No tracks yet — run encrypt.py to add some.</div>`;
+    return;
+  }
+
+  trackListEl.innerHTML = tracks.map((t, i) => `
+    <div class="track" data-index="${i}">
+      <div class="track-num">${String(i+1).padStart(2,"0")}</div>
+      <div class="track-body">
+        <div class="track-title">${t.title}</div>
+        ${t.note ? `<div class="track-note">${t.note}</div>` : ""}
+      </div>
+      <div class="track-time" data-duration="${i}">--:--</div>
+    </div>
+  `).join("");
+
+  trackListEl.querySelectorAll(".track").forEach(el => {
+    el.addEventListener("click", () => playTrack(parseInt(el.dataset.index)));
+  });
+}
+
+async function playTrack(i){
+  currentIndex = i;
+  updatePlayingHighlight("loading");
+  const t = tracks[i];
+
+  try{
+    const res = await fetch("songs/" + t.file, { cache:"no-store" });
+    const plain = await decryptBuffer(cryptoKey, await res.arrayBuffer());
+    const blob = new Blob([plain], { type:"audio/mpeg" });
+
+    if(currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = URL.createObjectURL(blob);
+
+    audio.src = currentObjectUrl;
+    await audio.play();
+    nowTitle.textContent = t.title;
+    nowBar.classList.add("active");
+    updatePlayingHighlight("playing");
+  } catch(e){
+    updatePlayingHighlight(null);
+  }
+}
+
+function updatePlayingHighlight(state){
+  trackListEl.querySelectorAll(".track").forEach((el, i) => {
+    el.classList.toggle("playing", state === "playing" && i === currentIndex);
+    el.classList.toggle("loading", state === "loading" && i === currentIndex);
+  });
+}
+
+playPauseBtn.addEventListener("click", () => {
+  if(currentIndex === -1) return;
+  if(audio.paused){ audio.play(); } else { audio.pause(); }
+});
+
+audio.addEventListener("play", () => { playPauseBtn.textContent = "❚❚"; });
+audio.addEventListener("pause", () => { playPauseBtn.textContent = "▶"; });
+
+audio.addEventListener("timeupdate", () => {
+  if(!audio.duration) return;
+  seek.value = (audio.currentTime / audio.duration) * 100;
+  timeLabel.textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(audio.duration)}`;
+});
+
+audio.addEventListener("ended", () => {
+  if(currentIndex < tracks.length - 1){
+    playTrack(currentIndex + 1);
+  }
+});
+
+seek.addEventListener("input", () => {
+  if(!audio.duration) return;
+  audio.currentTime = (seek.value / 100) * audio.duration;
+});
+</script>
+</body>
+</html>
